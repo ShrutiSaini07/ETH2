@@ -1,168 +1,228 @@
-import {React, useState, useEffect} from 'react'
-import {ethers} from 'ethers'
-import styles from './Bank.module.css'
-import simple_token_abi from './Contracts/bank_app_abi.json'
+import { React, useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+import styles from './Bank.module.css';
+import simple_token_abi from './Contracts/bank_app_abi.json';
 import Interactions from './Interactions';
 
+// functionalities: Create Account | Check Account Status | Deposit Money | Withdraw Money | Calculate Simple Interest | Show Names | Calculate Future Value
+
 const BankApp = () => {
+  // deploy simple token contract and paste deployed contract address here. This value is local ganache chain
+  let contractAddress = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
 
-	// deploy simple token contract and paste deployed contract address here. This value is local ganache chain
-	let contractAddress = '0x59eFE99aA926a79edEA31F7ED3b2661b1F9e2F62';
+  // created State variables
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [defaultAccount, setDefaultAccount] = useState(null);
+  const [connButtonText, setConnButtonText] = useState('Connect Wallet');
 
-	const [errorMessage, setErrorMessage] = useState(null);
-	const [defaultAccount, setDefaultAccount] = useState(null);
-	const [connButtonText, setConnButtonText] = useState('Connect Wallet');
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [contract, setContract] = useState(null);
 
-	const [provider, setProvider] = useState(null);
-	const [signer, setSigner] = useState(null);
-	const [contract, setContract] = useState(null);
+  const [transferHash, setTransferHash] = useState(null);
+  const [checkAcc, setCheckAcc] = useState('false');
+  const [accStatus, setAccStatus] = useState('');
+  const [accbalance, setAccBalance] = useState('');
 
-	const [transferHash, setTransferHash] = useState(null);
-	const [checkAcc, setCheckAcc] = useState("false");
-	const [accStatus, setAccStatus]= useState("");
-	const [accbalance, setAccBalance]= useState("");
+  const [simpleInterest, setSimpleInterest] = useState('');
 
-	const connectWalletHandler = () => {
-		if (window.ethereum && window.ethereum.isMetaMask) {
+  const [names, setNames] = useState([]);
 
-			window.ethereum.request({ method: 'eth_requestAccounts'})
-			.then(result => {
-				accountChangedHandler(result[0]);
-				setConnButtonText('Wallet Connected');
-			})
-			.catch(error => {
-				setErrorMessage(error.message);
-			
-			});
+  const [nameInput, setNameInput] = useState('');
 
-		} else {
-			console.log('Need to install MetaMask');
-			setErrorMessage('Please install MetaMask browser extension to interact');
-		}
-	}
+  const [futureValue, setFutureValue] = useState('');
 
-	// update account, will cause component re-render
-	const accountChangedHandler = (newAccount) => {
-		setDefaultAccount(newAccount);
-		updateEthers();
-	}
-	const chainChangedHandler = () => {
-		// reload the page to avoid any errors with chain change mid use of application
-		window.location.reload();
-	}
+  // Function to handle wallet connection
+  const connectWalletHandler = () => {
+    if (window.ethereum && window.ethereum.isMetaMask) {
+      window.ethereum
+        .request({ method: 'eth_requestAccounts' })
+        .then((result) => {
+          accountChangedHandler(result[0]);
+          setConnButtonText('Wallet Connected');
+        })
+        .catch((error) => {
+          setErrorMessage(error.message);
+        });
+    } else {
+      console.log('Need to install MetaMask');
+      setErrorMessage('Please install MetaMask browser extension to interact');
+    }
+  };
 
-	// listen for account changes
-	window.ethereum.on('accountsChanged', accountChangedHandler);
+  // Function to handle account change
+  const accountChangedHandler = (newAccount) => {
+    setDefaultAccount(newAccount);
+    updateEthers();
+  };
 
-	window.ethereum.on('chainChanged', chainChangedHandler);
+  // Function to handle chain change
+  const chainChangedHandler = () => {
+    // reload the page to avoid any errors with chain change mid use of application
+    window.location.reload();
+  };
 
-	const updateEthers = () => {
-		let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
-		setProvider(tempProvider);
+  // Listen for account changes
+  window.ethereum.on('accountsChanged', accountChangedHandler);
 
-		let tempSigner = tempProvider.getSigner();
-		setSigner(tempSigner);
+  // Listen for chain changes
+  window.ethereum.on('chainChanged', chainChangedHandler);
 
-		let tempContract = new ethers.Contract(contractAddress, simple_token_abi, tempSigner);
-		setContract(tempContract);	
-	}
+  // Update ethers provider, signer, and contract
+  const updateEthers = () => {
+    let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+    setProvider(tempProvider);
 
-	const createAccount = async()=>{
-		let txt = await contract.createAcc();
-		console.log(txt);
-		setAccStatus("Your Account is created");
-	}
-	const checkAccountExists = async()=>{
-		///e.preventDefault();
-		let txt = await contract.accountExists();
-		if(txt==true){
-		setCheckAcc("true");
-		}
-	}
-	const AccountBalance = async()=>{
-		let txt= await contract.accountBalance();
-		let balanceNumber = txt.toNumber();
-		//let tokenDecimals = await contract.decimals();
-		console.log(balanceNumber)
-		setAccBalance(''+balanceNumber);
-	}
-	const DepositBalance = async(e)=>{
-		e.preventDefault();
-		let depositAmount = e.target.depositAmount.value;
-		let txt= await contract.deposit({
-			value: depositAmount 
-		});
-	}
-	const transferHandler = async (e) => {
-		e.preventDefault();
-		let transferAmount = e.target.sendAmount.value;
-		let recieverAddress = e.target.recieverAddress.value;
-		let txt = await contract.transferEther(recieverAddress, transferAmount);
-		setTransferHash("Transfer confirmation hash: " + txt.hash);
-	}
-	const WithdrawBalance = async(e)=>{
-		e.preventDefault();
-		let withdrawAmount = e.target.withdrawAmount.value;
-		let txt= await contract.withdraw(withdrawAmount);
-		console.log(txt);
-	}
+    let tempSigner = tempProvider.getSigner();
+    setSigner(tempSigner);
 
+    let tempContract = new ethers.Contract(contractAddress, simple_token_abi, tempSigner);
+    setContract(tempContract);
+  };
 
-	return (
-	<div >
-		<h2> Bank Dapp- Create Account,Check Account,Check Balance,Transfer and Deposit </h2>
-		<button className={styles.button6} onClick={connectWalletHandler}>{connButtonText}</button>
+  // Function to create a bank account
+  const createAccount = async () => {
+    let txt = await contract.createAcc();
+    console.log(txt);
+    setAccStatus('Your Account is created');
+  };
 
-		<div className={styles.walletCard}>
-		<div>
-			<h3>Address: {defaultAccount}</h3>
-		</div>
+  // Function to check if an account exists
+  const checkAccountExists = async () => {
+    let txt = await contract.accountExists();
+    if (txt == true) {
+      setCheckAcc('true');
+    }
+  };
 
-		<div>
-			<button onClick={AccountBalance}>Account Balance</button> <h3>Balance in the Bank: {accbalance} </h3>
-		</div>
+  // Function to get the account balance
+  const AccountBalance = async () => {
+    let txt = await contract.accountBalance();
+    let balanceNumber = txt.toNumber();
+    console.log(balanceNumber);
+    setAccBalance('' + balanceNumber);
+  };
 
-			{errorMessage}
-		</div>
-		<div className={styles.interactionsCard}>
-		<div>
-		<h4>Click here to Create your account. Make sure you are connected to Wallet</h4>
-			<button onClick={createAccount}>CreateAccount</button>
-			<h4>Click here to check if your account Exists or not</h4>
-			<button onClick={checkAccountExists}>CheckAccountExists</button>
-			<h4>Your Account Status</h4> <h5> {checkAcc}</h5>
-		</div>
-				<form onSubmit={transferHandler}>
-					<h3> Transfer money </h3>
-						<p> Reciever Address </p>
-						<input type='text' id='recieverAddress' className={styles.addressInput}/>
+  // Function to withdraw money from the account
+  const WithdrawBalance = async (e) => {
+    e.preventDefault();
+    let withdrawAmount = e.target.withdrawAmount.value;
+    let txt = await contract.withdraw(withdrawAmount);
+    console.log(txt);
+  };
 
-						<p> Transfer Amount </p>
-						<input type='number' id='sendAmount' min='0' step='1'/>
+  // Function to calculate simple interest
+  const calculateSimpleInterest = async () => {
+    const amount = parseFloat(prompt('Enter the amount:'));
+    const interestRate = 0.05; // Assuming 5% interest rate
+    const timePeriod = 1; // Assuming 1 year time period
 
-						<button type='submit' className={styles.button6}>Transfer</button>
-						<div>
-							{transferHash}
-						</div>
-			</form>
-			<form onSubmit={DepositBalance}>
-					<h3> Deposit Money </h3>
-						<p> Deposit Amount </p>
-						<input type='number' id='depositAmount' min='0' step='1'/>
-						<button type='submit' className={styles.button6}>Deposit</button>
+    const interest = (amount * interestRate * timePeriod).toFixed(2);
 
-			</form>
-			<form onSubmit={WithdrawBalance}>
-					<h3> Withdraw Money </h3>
-						<p>Withdraw Amount </p>
-						<input type='number' id='withdrawAmount' min='0' step='1'/>
-						<button type='submit' className={styles.button6}>Withdraw</button>
+    setSimpleInterest(interest);
+  };
 
-			</form>
-		</div>
+  // Function to show the names
+  const showNames = async () => {
+    let txt = await contract.getNames();
+    setNames(txt);
+  };
 
-	</div>
-	)
-}
+  // Function to add a name
+  const addName = async () => {
+    if (nameInput.trim() !== '') {
+      await contract.addName(nameInput);
+      setNameInput('');
+      showNames();
+      alert(`Name added: ${nameInput}`);
+    } else {
+      alert('Please enter a valid name.');
+    }
+  };
+
+  // Function to calculate the future value
+  const calculateFutureValue = async () => {
+    const amount = parseFloat(prompt('Enter the total amount:'));
+    const interestRate = parseFloat(prompt('Enter the interest rate (in decimal form):'));
+    const timePeriod = 5; // Assuming 5 years time period
+
+    const futureVal = (amount * Math.pow(1 + interestRate, timePeriod)).toFixed(2);
+
+    setFutureValue(futureVal);
+  };
+
+  // returns JSX Markup that represents UI of the Piggy Bank App
+  return (
+    <div>
+      <h2>PIGGY BANK</h2>
+      <button className={styles.button6} onClick={connectWalletHandler}>
+        {connButtonText}
+      </button>
+
+      <div className={styles.walletCard}>
+        <div>
+          <h3>Address: {defaultAccount}</h3>
+        </div>
+
+        <div>
+          <button onClick={AccountBalance}>Account Balance</button>{' '}
+          <h3>Bank Balance: {accbalance} </h3>
+        </div>
+
+        {errorMessage}
+      </div>
+      <div className={styles.interactionsCard}>
+        <div>
+          <h4>New User? Click to Create Account</h4>
+          <button onClick={createAccount}>Create Account</button>
+          <h4>Check account status</h4>
+          <button onClick={checkAccountExists}>Account Status?</button>
+          <h4>Account Status:</h4> <h5> {checkAcc}</h5>
+        </div>
+        <form onSubmit={WithdrawBalance}>
+          <h3>Withdraw Money</h3>
+          <p>Withdraw Amount</p>
+          <input type="number" id="withdrawAmount" min="0" step="1" />
+          <button type="submit" className={styles.button6}>
+            Withdraw
+          </button>
+        </form>
+        <div>
+          <h3>Calculate Simple Interest</h3>
+          <button onClick={calculateSimpleInterest}>Calculate</button>
+          {simpleInterest && <p>Simple Interest: {simpleInterest}</p>}
+        </div>
+        <div>
+          <h3>Show Names</h3>
+          <button onClick={showNames}>Show Names</button>
+          {names && (
+            <ul>
+              {names.map((name, index) => (
+                <li key={index}>{name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <h3>Add Name</h3>
+          <form onSubmit={addName}>
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Enter Name"
+            />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+        <div>
+          <h3>Calculate Future Value</h3>
+          <button onClick={calculateFutureValue}>Calculate</button>
+          {futureValue && <p>Future Value after 5 years: {futureValue}</p>}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default BankApp;

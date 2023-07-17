@@ -1,45 +1,82 @@
+/* General styles */
+body {
+  font-family: 'Helvetica', sans-serif;
+  background-color: #cfa5bf;
+}
 
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.title {
+  text-align: center;
+  font-size: 4em;
+  margin-bottom: 1em;
+  color: #333333;
+}
+
+/* Wallet Card styles */
 .walletCard {
-	text-align: left;
-	width: 50%;
-	margin: auto;
-	border-radius: 10px;
-	background-color: grey;
-	box-shadow: 0.2em 0.2em 0 0.2em rgba(0,0,0,0.17);
+  text-align: left;
+  width: 80%;
+  margin: 5em;
+  border-radius: 10px;
+  background-color: #e18071; /* Dark blue */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Box shadow */
+  padding: 2em;
+  color: #ffffff;
 }
 
 .walletCard h3 {
-	margin-left:1em;
-	margin-bottom: 1em;
-	margin-top: 1em;
+  margin: 1em 0;
 }
 
+/* Interactions Card styles */
 .interactionsCard {
-	display: flex;
-	flex-direction: column;
-	width: 50%;
-	margin: auto;
-	padding-bottom: 1em;
-	border-radius: 10px;
-	background-color: grey;
-	box-shadow: 0.2em 0.2em 0 0.2em rgba(0,0,0,0.17);
+  text-align: left;
+  width: 80%;
+  margin: 5em;
+  padding: 2em;
+  border-radius: 10px;
+  background-color: #83b4bf; /* Brown */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Box shadow */
 }
 
-.addressInput{
-	width: 75%;
+.interactionsCard h3 {
+  margin: 1em 0;
+  color: #ffffff;
 }
 
+.addressInput {
+  width: 95%;
+  border-radius: 30px;
+}
+
+/* Button styles */
 .button6 {
-	border: none;
-	padding: 0.7em 1.4em;
-	margin: 0 0.3em 0.3em 0.3em;
-	border-radius:0.15em;
-	box-sizing: border-box;
-	text-decoration: none;
-	font-family: 'Papyrus', 'Copperplate' sans-serif;
-	text-transform: uppercase;
-	font-weight: 400;
-	color:#FFFFFF;
-	background-color: #04080F;
-	box-shadow: inset 0 -0.6em 0 -0.35em rgba(0,0,0,0.17);
+  border: none;
+  padding: 0.7em 1.4em;
+  margin: 0.3em;
+  border-radius: 10em;
+  box-sizing: border-box;
+  text-decoration: none;
+  font-family: 'Helvetica', sans-serif;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #ffffff;
+  background-color: #ba72a3; /* Brown */
+  box-shadow: 0 0.2em 0.4em rgba(0, 0, 0, 0.2);
+}
+
+/* Container styles */
+.accountContainer {
+  background-color: #1a1e5c; /* Dark blue */
+}
+
+.interactionsContainer {
+  background-color: #8b4513; /* Brown */
 }
